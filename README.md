@@ -6,6 +6,13 @@
 ![Express](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)
 ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
 
+
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Contributions](https://img.shields.io/badge/contributions-welcome-brightgreen)
+
+
 ## 🎯 **Sobre o Projeto**
 
 TaskFlow é um sistema completo de gerenciamento de tarefas desenvolvido em **TypeScript puro**, implementando autenticação segura com JWT e CRUD completo para tarefas. O projeto foi arquitetado com foco em segurança, performance e manutenibilidade.
