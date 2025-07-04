@@ -1,0 +1,31 @@
+{
+  "name": "tela-de-login",
+  "version": "1.0.0",
+  "description": "Sistema completo de Lista de Tarefas com autenticação",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "start": "npm run start:backend",
+    "start:backend": "cd backend && npm start"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "react",
+    "typescript",
+    "sqlite",
+    "jwt",
+    "material-ui",
+    "todo-list"
+  ],
+  "author": "Desenvolvedor",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
