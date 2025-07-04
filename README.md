@@ -1,17 +1,33 @@
 # 📝 TaskFlow - Sistema de Lista de Tarefas
 
+<!-- Badges de tecnologia -->
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)
 ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
 
-
+<!-- Badges de status -->
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
+![License](https://img.shields.io/badge/license-MIT%20(Uso%20Pessoal)-blue)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Contributions](https://img.shields.io/badge/contributions-welcome-brightgreen)
+![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue)
+![Code Quality](https://img.shields.io/badge/code%20quality-A+-brightgreen)
+![Personal Use](https://img.shields.io/badge/uso-pessoal%20apenas-orange)
 
+<!-- Badges dinâmicos do GitHub -->
+![GitHub last commit](https://img.shields.io/github/last-commit/CarlosSilva09/TaskFlow)
+![GitHub repo size](https://img.shields.io/github/repo-size/CarlosSilva09/TaskFlow)
+![GitHub language count](https://img.shields.io/github/languages/count/CarlosSilva09/TaskFlow)
+![GitHub top language](https://img.shields.io/github/languages/top/CarlosSilva09/TaskFlow)
+
+## ⚠️ **Aviso de Licença**
+
+> **🔒 Este projeto é licenciado para USO PESSOAL APENAS**
+> 
+> - ✅ **Permitido:** Estudar, aprender, usar para projetos pessoais
+> - ❌ **Proibido:** Uso comercial, redistribuição, venda
+> - 📧 **Contato comercial:** duduborba93@gmail.com
 
 ## 🎯 **Sobre o Projeto**
 
@@ -230,13 +246,23 @@ CREATE TABLE todos (
 
 ## 📄 **Licença**
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está sob a **licença MIT modificada para uso pessoal apenas**. 
+
+⚠️ **IMPORTANTE:**
+- ✅ **Permitido:** Uso pessoal, estudo e aprendizado
+- ❌ **Proibido:** Uso comercial sem autorização
+- ❌ **Proibido:** Redistribuição ou venda
+
+Veja o arquivo [LICENSE](LICENSE) para detalhes completos.
+
+**Contato para uso comercial:** duduborba93@gmail.com
 
 ## 👨‍💻 **Autor**
 
-**Carlos Silva**
+**Carlos Eduardo Borba Silva**
 - GitHub: [@CarlosSilva09](https://github.com/CarlosSilva09)
 - LinkedIn: [Carlos Silva](https://www.linkedin.com/in/carlos-eduardo-borba-silva/)
+- Email: duduborba93@gmail.com
 
 ## 🎯 **Próximas Funcionalidades**
 
