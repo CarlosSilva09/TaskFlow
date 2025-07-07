@@ -260,7 +260,7 @@ const Register: React.FC = () => {
                 />
               }
               label={
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="#666">
                   I want to receive updates via email.
                 </Typography>
               }
@@ -268,24 +268,24 @@ const Register: React.FC = () => {
             />
 
             <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={isLoading}
-              sx={{
-                py: 1.5,
-                mb: 3,
-                fontSize: '16px',
-                fontWeight: 600,
-                background: 'linear-gradient(45deg, #7F5AF0, #2CB67D)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #6B47D8, #239B68)',
-                },
-                '&:disabled': {
-                  background: 'rgba(127, 90, 240, 0.3)',
-                },
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={isLoading}
+            sx={{
+             py: 1.5,
+             mb: 3,
+              fontSize: '16px',
+              fontWeight: 600,
+              background: 'linear-gradient(45deg, #7F5AF0, #2CB67D)',
+              '&:hover': {
+              background: 'linear-gradient(45deg, #6B47D8, #239B68)',
+              },
+              '&:disabled': {
+              background: 'rgba(127, 90, 240, 0.3)',
+              },
               }}
-            >
+             >
               {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign up'}
             </Button>
 

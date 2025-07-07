@@ -46,43 +46,83 @@ export class AuthController {
         password: '***' // Esconde senha nos logs
       });
 
-      // Validação: campos obrigatórios
+      // VALIDAÇÃO: CAMPOS OBRIGATÓRIOS
+      // Verificar se todos os campos necessários foram enviados pelo cliente
+      // Em JavaScript, valores considerados "falsy" (que falham no if):
+      // - undefined (campo não enviado)
+      // - null (valor nulo)
+      // - "" (string vazia)
+      // - 0 (número zero)
+      // - false (booleano falso)
+      // - NaN (Not a Number)
+      // O operador ! converte para booleano e inverte (falsy vira true)
+      // Usar || (OR) significa que se qualquer campo estiver faltando, a condição é verdadeira
       if (!name || !email || !password) {
-        console.log('❌ Campos obrigatórios faltando');
+        console.log('❌ Validação falhou - campos obrigatórios faltando:', {
+          name: !name ? 'FALTANDO' : 'OK',
+          email: !email ? 'FALTANDO' : 'OK', 
+          password: !password ? 'FALTANDO' : 'OK'
+        });
         res.status(HttpStatusCode.BAD_REQUEST).json({
           success: false,
           message: 'Nome, email e senha são obrigatórios',
-          errors: ['Campos obrigatórios: name, email, password']
+          errors: ['Todos os campos são obrigatórios: name, email, password']
         } as ApiResponse);
-        return;
+        return; // Interrompe execução da função
       }
 
-      // Validação: formato de email
+      // VALIDAÇÃO DE FORMATO DE EMAIL
+      // Usar regex (expressão regular) para verificar se o email tem formato válido
+      // Regex explicada parte por parte:
+      // ^          : início da string (âncora)
+      // [^\s@]+    : um ou mais caracteres que NÃO sejam espaços (\s) ou @ 
+      // @          : exatamente um caractere @
+      // [^\s@]+    : um ou mais caracteres que NÃO sejam espaços ou @
+      // \.         : exatamente um ponto (. é escapado com \ porque . tem significado especial)
+      // [^\s@]+    : um ou mais caracteres que NÃO sejam espaços ou @
+      // $          : fim da string (âncora)
+      // Exemplos válidos: usuario@exemplo.com, test@site.org, email@test.com.br
+      // Exemplos inválidos: @exemplo.com, usuario@, usuario.exemplo.com, usuario @exemplo.com
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        console.log('❌ Email inválido:', email);
+        console.log('❌ Email com formato inválido:', email);
         res.status(HttpStatusCode.BAD_REQUEST).json({
           success: false,
           message: 'Formato de email inválido',
-          errors: ['Email deve ter um formato válido']
+          errors: ['Email deve ter um formato válido como: usuario@exemplo.com']
         } as ApiResponse);
         return;
       }
 
-      // Validação de senha
+      // VALIDAÇÃO DE COMPRIMENTO DA SENHA
+      // Verificar se a senha atende aos critérios mínimos de segurança
+      // .length retorna o número de caracteres da string
+      // 6 caracteres é o mínimo básico, mas em produção considerar:
+      // - Pelo menos 8 caracteres
+      // - Mistura de maiúsculas e minúsculas  
+      // - Pelo menos um número
+      // - Pelo menos um caractere especial (!@#$%^&*)
+      // - Verificação contra senhas comuns (123456, password, etc.)
       if (password.length < 6) {
-        console.log('❌ Senha muito curta');
+        console.log('❌ Senha muito curta - comprimento:', password.length, 'caracteres');
         res.status(HttpStatusCode.BAD_REQUEST).json({
           success: false,
           message: 'A senha deve ter pelo menos 6 caracteres',
-          errors: ['Senha deve ter no mínimo 6 caracteres']
+          errors: ['Senha deve ter no mínimo 6 caracteres para segurança básica']
         } as ApiResponse);
         return;
       }
 
-      // Validação de nome
+      // VALIDAÇÃO DE COMPRIMENTO DO NOME
+      // Verificar se o nome tem comprimento razoável
+      // 3 caracteres é mínimo para evitar nomes muito curtos (ex: "AB")
+      // Em sistemas mais rigorosos, pode-se validar:
+      // - Não permitir números no nome
+      // - Não permitir caracteres especiais
+      // - Validar se contém pelo menos nome e sobrenome
+      // - Verificar contra lista de palavras ofensivas
       if (name.length < 3) {
-        console.log('❌ Nome muito curto');
+        console.log('❌ Nome muito curto - comprimento:', name.length, 'caracteres');
         res.status(HttpStatusCode.BAD_REQUEST).json({
           success: false,
           message: 'O nome deve ter pelo menos 3 caracteres',
@@ -91,32 +131,47 @@ export class AuthController {
         return;
       }
 
-      // Verificar se o email já existe
+      // VERIFICAR SE O EMAIL JÁ ESTÁ CADASTRADO
+      // Buscar na base de dados se já existe um usuário com este email
+      // Emails devem ser únicos no sistema para evitar conflitos de login
+      // Esta verificação é importante porque:
+      // 1. Email é usado como identificador único para login
+      // 2. Evita múltiplas contas com mesmo email  
+      // 3. Previne confusão na recuperação de senha
+      // 4. Melhora a integridade dos dados
       const existingUserByEmail = await UserModel.findByEmail(email);
       if (existingUserByEmail) {
-        console.log('❌ Email já existe:', email);
+        console.log('❌ Tentativa de registro com email já existente:', email);
+        console.log('   Usuário existente ID:', existingUserByEmail.id, 'Nome:', existingUserByEmail.name);
         res.status(HttpStatusCode.CONFLICT).json({
           success: false,
-          message: 'Este email já está cadastrado',
-          errors: ['Email já em uso']
+          message: 'Este email já está cadastrado no sistema',
+          errors: ['Email já está em uso. Use outro email ou faça login.']
         } as ApiResponse);
         return;
       }
 
-      // Criar usuário
+      // CRIAR NOVO USUÁRIO NO BANCO DE DADOS
+      // Chama o modelo User para inserir um novo registro na tabela users
+      // O método create() automaticamente faz hash da senha usando bcrypt
       const newUser = await UserModel.create(name, email, password);
       console.log('✅ Usuário criado com ID:', newUser.id);
 
-      // Gerar token
+      // GERAR TOKEN JWT DE AUTENTICAÇÃO
+      // Cria um token JWT contendo informações do usuário (payload)
+      // Este token será usado para autenticar requisições futuras
+      // O token expira em 24 horas (configurado no middleware de auth)
       const token = generateToken({
-        userId: newUser.id,
-        name,
-        email
+        userId: newUser.id, // ID único do usuário
+        name,               // Nome do usuário
+        email               // Email do usuário
       });
 
       console.log('✅ Token gerado para usuário:', newUser.id);
 
-      // Resposta de sucesso
+      // RESPOSTA DE SUCESSO PARA O CLIENTE
+      // Retorna status 201 (Created) com o token e dados do usuário
+      // O frontend salvará o token no localStorage para próximas requisições
       res.status(HttpStatusCode.CREATED).json({
         success: true,
         message: 'Usuário criado com sucesso',
@@ -175,9 +230,14 @@ export class AuthController {
         return;
       }
 
-      // Buscar usuário
+      // BUSCAR USUÁRIO NO BANCO DE DADOS PELO EMAIL
+      // Procura na tabela users se existe um usuário com o email fornecido
+      // O email é único na base de dados (constraint UNIQUE)
       const user = await UserModel.findByEmail(email);
       if (!user) {
+        // USUÁRIO NÃO ENCONTRADO
+        // Por segurança, não especificamos se é email ou senha incorreta
+        // Isso evita ataques de enumeração de usuários
         console.log('❌ Usuário não encontrado:', email);
         res.status(HttpStatusCode.UNAUTHORIZED).json({
           success: false,
@@ -187,9 +247,13 @@ export class AuthController {
         return;
       }
 
-      // Verificar senha
+      // VERIFICAR SE A SENHA ESTÁ CORRETA
+      // Compara a senha em texto plano com o hash armazenado no banco
+      // Usa bcrypt.compare() que é seguro contra timing attacks
       const isValidPassword = await UserModel.verifyPassword(password, user.password);
       if (!isValidPassword) {
+        // SENHA INCORRETA
+        // Mesma mensagem genérica por motivos de segurança
         console.log('❌ Senha inválida para:', email);
         res.status(HttpStatusCode.UNAUTHORIZED).json({
           success: false,
@@ -199,16 +263,21 @@ export class AuthController {
         return;
       }
 
-      // Gerar token
+      // GERAR TOKEN JWT PARA SESSÃO AUTENTICADA
+      // Cria um novo token JWT com os dados do usuário autenticado
+      // Este token será enviado em todas as próximas requisições no header Authorization
       const token = generateToken({
-        userId: user.id,
-        name: user.name,
-        email: user.email
+        userId: user.id,    // ID único do usuário (chave primária)
+        name: user.name,    // Nome completo do usuário
+        email: user.email   // Email do usuário (já validado)
       });
 
       console.log('✅ Login realizado com sucesso:', user.id);
 
-      // Resposta de sucesso
+      // RESPOSTA DE SUCESSO COM TOKEN E DADOS DO USUÁRIO
+      // Retorna status 200 (OK) com:
+      // - Token JWT para autenticação
+      // - Dados completos do usuário (sem a senha)
       res.status(HttpStatusCode.OK).json({
         success: true,
         message: 'Login realizado com sucesso',
@@ -253,10 +322,15 @@ export class AuthController {
 
       console.log('👤 Perfil solicitado para usuário:', user.id);
 
-      // Buscar dados atualizados do usuário
+      // BUSCAR DADOS ATUALIZADOS DO USUÁRIO NO BANCO
+      // Busca os dados mais recentes do usuário na base de dados
+      // Isso garante que retornamos informações atualizadas (caso tenha sido alterado)
+      // O token pode ter dados antigos se o perfil foi atualizado após o login
       const currentUser = await UserModel.findById(user.id);
       
       if (!currentUser) {
+        // USUÁRIO NÃO ENCONTRADO (foi deletado após criar o token)
+        // Situação rara: usuário fez login mas foi removido da base de dados
         res.status(HttpStatusCode.NOT_FOUND).json({
           success: false,
           message: 'Usuário não encontrado',
@@ -265,6 +339,9 @@ export class AuthController {
         return;
       }
 
+      // RETORNAR DADOS COMPLETOS DO PERFIL
+      // Inclui: id, name, email, created_at, updated_at
+      // Exclui: password (por segurança)
       res.status(HttpStatusCode.OK).json({
         success: true,
         message: 'Perfil recuperado com sucesso',
@@ -314,6 +391,9 @@ export class AuthController {
         return;
       }
 
+      // VALIDAR COMPRIMENTO DA NOVA SENHA
+      // Mesma regra do registro: mínimo 6 caracteres
+      // Em produção, considerar regras mais rigorosas (números, símbolos, etc.)
       if (newPassword.length < 6) {
         console.log('❌ Nova senha muito curta');
         res.status(HttpStatusCode.BAD_REQUEST).json({
@@ -324,6 +404,9 @@ export class AuthController {
         return;
       }
 
+      // VERIFICAR SE A NOVA SENHA É DIFERENTE DA ATUAL
+      // Força o usuário a escolher uma senha realmente nova
+      // Comparação em texto plano (antes do hash)
       if (currentPassword === newPassword) {
         console.log('❌ Nova senha igual à atual');
         res.status(HttpStatusCode.BAD_REQUEST).json({
@@ -334,13 +417,20 @@ export class AuthController {
         return;
       }
 
-      // Alterar senha
+      // ALTERAR SENHA NO BANCO DE DADOS
+      // Chama o modelo User para:
+      // 1. Verificar se a senha atual está correta (bcrypt.compare)
+      // 2. Gerar hash da nova senha (bcrypt.hash)
+      // 3. Atualizar o registro no banco com o novo hash
       const success = await UserModel.changePassword(user.id, {
-        currentPassword,
-        newPassword
+        currentPassword, // Senha atual em texto plano (para verificação)
+        newPassword      // Nova senha em texto plano (será hasheada)
       });
 
       if (success) {
+        // SENHA ALTERADA COM SUCESSO
+        // O usuário precisará fazer login novamente com a nova senha
+        // O token atual continua válido até expirar
         console.log('✅ Senha alterada com sucesso para usuário:', user.id);
         res.status(HttpStatusCode.OK).json({
           success: true,
@@ -396,10 +486,14 @@ export class AuthController {
 
       console.log('📝 Atualização de perfil solicitada para usuário:', user.id);
 
-      // Validações
+      // PREPARAR DADOS PARA ATUALIZAÇÃO
+      // Objeto que conterá apenas os campos que serão atualizados
+      // Permite atualização parcial (só nome, só email, ou ambos)
       const updateData: Partial<{ name: string; email: string }> = {};
 
+      // VALIDAR E ADICIONAR NOME SE FORNECIDO
       if (name !== undefined) {
+        // Validar comprimento mínimo do nome
         if (name.length < 3) {
           res.status(HttpStatusCode.BAD_REQUEST).json({
             success: false,
@@ -408,22 +502,32 @@ export class AuthController {
           } as ApiResponse);
           return;
         }
-        updateData.name = name;
+        updateData.name = name; // Adiciona nome aos dados de atualização
       }
 
+      // VALIDAR E ADICIONAR EMAIL SE FORNECIDO
       if (email !== undefined) {
+        // VALIDAÇÃO DE FORMATO DE EMAIL COM REGEX
+        // Regex explicada:
+        // ^[^\s@]+   : início, um ou mais caracteres que não sejam espaço ou @
+        // @          : exatamente um @
+        // [^\s@]+    : um ou mais caracteres que não sejam espaço ou @
+        // \.         : exatamente um ponto (escapado)
+        // [^\s@]+$   : um ou mais caracteres que não sejam espaço ou @, fim
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
           res.status(HttpStatusCode.BAD_REQUEST).json({
             success: false,
             message: 'Formato de email inválido',
-            errors: ['Email deve ter um formato válido']
+            errors: ['Email deve ter um formato válido como: usuario@exemplo.com']
           } as ApiResponse);
           return;
         }
-        updateData.email = email;
+        updateData.email = email; // Adiciona email aos dados de atualização
       }
 
+      // VERIFICAR SE PELO MENOS UM CAMPO FOI FORNECIDO
+      // Se nenhum campo válido foi enviado, retorna erro
       if (Object.keys(updateData).length === 0) {
         res.status(HttpStatusCode.BAD_REQUEST).json({
           success: false,
@@ -433,11 +537,14 @@ export class AuthController {
         return;
       }
 
-      // Atualizar perfil
+      // ATUALIZAR PERFIL NO BANCO DE DADOS
+      // Chama o modelo User para atualizar apenas os campos modificados
+      // Se email for alterado, verifica se já não existe outro usuário com o mesmo email
       const success = await UserModel.update(user.id, updateData);
 
       if (success) {
-        // Buscar dados atualizados
+        // BUSCAR DADOS ATUALIZADOS DO BANCO
+        // Importante buscar dados frescos para confirmar a atualização
         const updatedUser = await UserModel.findById(user.id);
         
         console.log('✅ Perfil atualizado com sucesso para usuário:', user.id);
@@ -445,10 +552,12 @@ export class AuthController {
           success: true,
           message: 'Perfil atualizado com sucesso',
           data: {
-            user: updatedUser
+            user: updatedUser // Retorna dados atualizados
           }
         } as ApiResponse<{ user: UserResponse | undefined }>);
       } else {
+        // FALHA NA ATUALIZAÇÃO
+        // Pode ser erro de banco ou violação de constraint (email duplicado)
         res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: 'Erro ao atualizar perfil',
@@ -476,70 +585,151 @@ export class AuthController {
   }
 
   /**
-   * Valida o token atual do usuário
-   * @param req - Request autenticada
-   * @param res - Response
+   * Valida o token JWT atual do usuário
+   * 
+   * Esta função verifica se o token JWT enviado pelo cliente é válido e não expirou.
+   * É usada pelo frontend para confirmar se o usuário ainda está autenticado
+   * antes de realizar operações que requerem autenticação.
+   * 
+   * Fluxo da validação:
+   * 1. O middleware de autenticação já verificou a assinatura e expiração do token
+   * 2. Se chegou até aqui, o token é tecnicamente válido
+   * 3. Verifica se os dados do usuário estão presentes no request
+   * 4. Retorna confirmação de que o token é válido
+   * 
+   * @param req - Request autenticada contendo dados do usuário extraídos do token
+   * @param res - Response com confirmação de validade
    */
   static async validateToken(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+      // EXTRAIR DADOS DO USUÁRIO DO TOKEN
+      // Se o request chegou até aqui, significa que:
+      // - O token foi enviado no header Authorization: Bearer <token>
+      // - O middleware de auth verificou a assinatura JWT
+      // - O token não está expirado
+      // - Os dados do usuário foram extraídos e colocados em req.user
       const user = req.user;
 
+      // VERIFICAR SE OS DADOS DO USUÁRIO ESTÃO PRESENTES
+      // Situação teoricamente impossível se o middleware funcionou corretamente
+      // Mas é uma verificação de segurança adicional
       if (!user) {
+        console.log('❌ Token sem dados de usuário válidos');
         res.status(HttpStatusCode.UNAUTHORIZED).json({
           success: false,
           message: 'Token inválido',
-          errors: ['Token não é válido']
+          errors: ['Token não contém dados válidos do usuário']
         } as ApiResponse);
         return;
       }
 
-      console.log('✅ Token validado para usuário:', user.id);
+      // LOG DE VALIDAÇÃO BEM-SUCEDIDA
+      // Registra que o token foi validado com sucesso
+      // Útil para auditoria e debugging
+      console.log('✅ Token validado com sucesso para usuário:', user.id);
 
+      // RESPOSTA DE CONFIRMAÇÃO DE VALIDADE
+      // Retorna status 200 (OK) confirmando que:
+      // - O token é válido e não expirou
+      // - O usuário está autenticado
+      // - Os dados do usuário estão íntegros
+      // O frontend pode usar essa resposta para manter o usuário logado
       res.status(HttpStatusCode.OK).json({
         success: true,
-        message: 'Token válido',
+        message: 'Token válido e usuário autenticado',
         data: {
-          user: user,
-          valid: true
+          user: user,     // Dados completos do usuário (do token)
+          valid: true     // Flag explícita de validade
         }
       } as ApiResponse<{ user: UserResponse; valid: boolean }>);
     } catch (error: any) {
-      console.error('❌ Erro ao validar token:', error.message);
+      // TRATAMENTO DE ERROS INESPERADOS
+      // Erros que podem ocorrer durante a validação
+      // Geralmente relacionados a problemas de infraestrutura
+      console.error('❌ Erro inesperado ao validar token:', error.message);
       res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Erro interno do servidor',
-        errors: ['Erro ao validar token']
+        errors: ['Falha na validação do token']
       } as ApiResponse);
     }
   }
 
   /**
-   * Logout (invalida o token no cliente)
-   * @param req - Request autenticada
-   * @param res - Response
+   * Realiza logout do usuário (invalidação no lado cliente)
+   * 
+   * Como estamos usando JWT stateless (sem estado no servidor), o logout é 
+   * diferente de sistemas tradicionais com sessões. O token JWT não pode ser
+   * "invalidado" no servidor de forma simples - ele continuará válido até expirar.
+   * 
+   * O logout efetivo acontece no frontend quando:
+   * 1. O token é removido do localStorage/sessionStorage
+   * 2. O estado de autenticação é limpo
+   * 3. O usuário é redirecionado para a página de login
+   * 
+   * Esta função serve apenas para:
+   * - Registrar o evento de logout nos logs
+   * - Confirmar ao frontend que o logout foi "processado"
+   * - Manter consistência na API REST
+   * 
+   * Para sistemas que precisam de logout imediato do servidor, seria necessário:
+   * - Implementar uma blacklist de tokens
+   * - Usar refresh tokens
+   * - Reduzir o tempo de expiração dos tokens
+   * 
+   * @param req - Request autenticada (pode ou não ter dados do usuário)
+   * @param res - Response confirmando o logout
    */
   static async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+      // EXTRAIR DADOS DO USUÁRIO SE DISPONÍVEIS
+      // O usuário pode estar ou não autenticado no momento do logout
+      // Se o token expirou, req.user será undefined, mas ainda processamos o logout
       const user = req.user;
 
+      // REGISTRAR EVENTO DE LOGOUT NOS LOGS
+      // Importante para auditoria e monitoramento de segurança
+      // Permite rastrear quando e quem fez logout
       if (user) {
-        console.log('👋 Logout realizado para usuário:', user.id);
+        console.log('👋 Logout realizado para usuário autenticado:', user.id, '-', user.email);
+      } else {
+        console.log('👋 Logout realizado (usuário não identificado ou token expirado)');
       }
 
-      // Como estamos usando JWT stateless, o logout é feito no frontend
-      // Aqui podemos log a ação ou implementar uma blacklist de tokens se necessário
+      // INSTRUÇÕES PARA O FRONTEND
+      // Como estamos usando JWT stateless, o logout efetivo deve ser feito no frontend:
+      // 1. Remover token do armazenamento local (localStorage.removeItem('token'))
+      // 2. Limpar estado de autenticação no contexto da aplicação
+      // 3. Redirecionar para página de login
+      // 4. Invalidar dados em cache relacionados ao usuário
       
+      // Em um sistema com blacklist de tokens, aqui adicionaríamos o token à blacklist:
+      // await TokenBlacklist.add(req.headers.authorization?.replace('Bearer ', ''));
+
+      // RESPOSTA DE CONFIRMAÇÃO DE LOGOUT
+      // Confirma ao frontend que o logout foi processado com sucesso
+      // Status 200 (OK) indica que a operação foi bem-sucedida
       res.status(HttpStatusCode.OK).json({
         success: true,
-        message: 'Logout realizado com sucesso',
-        data: {}
-      } as ApiResponse);
+        message: 'Logout realizado com sucesso. Token deve ser removido do cliente.',
+        data: {
+          loggedOut: true,                    // Flag confirmando logout
+          timestamp: new Date().toISOString() // Momento do logout
+        }
+      } as ApiResponse<{ loggedOut: boolean; timestamp: string }>);
     } catch (error: any) {
-      console.error('❌ Erro no logout:', error.message);
+      // TRATAMENTO DE ERROS NO LOGOUT
+      // Erros são raros no logout, mas podem ocorrer por:
+      // - Problemas de infraestrutura
+      // - Falhas na gravação de logs
+      // - Problemas com blacklist (se implementada)
+      console.error('❌ Erro inesperado durante logout:', error.message);
+      console.error('Stack trace:', error.stack);
+      
       res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: 'Erro interno do servidor',
-        errors: ['Erro ao processar logout']
+        message: 'Erro interno do servidor durante logout',
+        errors: ['Falha ao processar logout']
       } as ApiResponse);
     }
   }
